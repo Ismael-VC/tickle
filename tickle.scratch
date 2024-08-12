@@ -1,0 +1,144 @@
+define XOR (a) (b)
+set [res v] to []
+set [bit v] to [1]
+repeat (length of (a::custom)::operators)
+    set [res v] to (join (res) (item ((join [0x] (join (letter (bit) of (a::custom)) (letter (bit) of (b::custom)))) + (1)) of [xor_lookup_table v]))
+    change [bit v] by (1)
+end
+
+define AND (a) (b)
+set [res v] to []
+set [bit v] to [1]
+repeat (length of (a::custom)::operators)
+    set [res v] to (join (res) (item ((join [0x] (join (letter (bit) of (a::custom)) (letter (bit) of (b::custom)))) + (1)) of [and_lookup_table v]))
+    change [bit v] by (1)
+end
+
+define OR (a) (b)
+set [res v] to []
+set [bit v] to [1]
+repeat (length of (a::custom)::operators)
+    set [res v] to (join (res) (item ((join [0x] (join (letter (bit) of (a::custom)) (letter (bit) of (b::custom)))) + (1)) of [or_lookup_table v]))
+    change [bit v] by (1)
+end
+
+when [space v] key pressed::event
+go to x: (-171) y: (-132)
+erase all
+set instrument to [(6\\\) Bass v]
+play note (58) for (0.0625) beats
+say [Hello!]
+set [pc v] to [255]
+OPC [a0]::custom
+
+define uxn_init
+delete all of [wst v]
+set [wst_ptr v] to [1]
+delete all of [rst v]
+set [rst_ptr v] to [1]
+delete all of [dev v]
+delete all of [ram v]
+repeat (256)
+    add [0] to [wst v]
+    add [0] to [rst v]
+    add [0] to [dev v]
+end
+repeat (65536)
+    add [0] to [ram v]
+end
+
+define dei (addr)
+set [res v] to (item (addr::custom) of [dev v])
+
+define deo (addr) (value)
+replace item (addr::custom) of [dev v] with (value::custom)
+
+define varavara_init
+delete all of [dev v]
+repeat (256)
+    add [0] to [dev v]
+end
+
+define OPC (opc)
+OR [00] (opc::custom)::custom
+if <(res) = (item ((pc) + (1)) of [ram v])> then
+    think [0x00]
+    set [_2 v] to [0]
+    set [_r v] to [0]
+    set [s v] to (wst::list)
+    set [sp v] to (wst_ptr)
+else
+    OR [20] (opc::custom)::custom
+    if <(res) = (item ((pc) + (1)) of [ram v])> then
+        think [0x20]
+        set [_2 v] to [1]
+        set [_r v] to [0]
+        set [s v] to (wst::list)
+        set [sp v] to (wst_ptr)
+    else
+        OR [40] (opc::custom)::custom
+        if <(res) = (item ((pc) + (1)) of [ram v])> then
+            think [0x40]
+            set [_2 v] to [0]
+            set [_r v] to [1]
+            set [s v] to (rst::list)
+            set [sp v] to (rst_ptr)
+        else
+            OR [60] (opc::custom)::custom
+            if <(res) = (item ((pc) + (1)) of [ram v])> then
+                think [0x60]
+                set [_2 v] to [1]
+                set [_r v] to [1]
+                set [s v] to (rst::list)
+                set [sp v] to (rst_ptr)
+            else
+                OR [80] (opc::custom)::custom
+                if <(res) = (item ((pc) + (1)) of [ram v])> then
+                    think [0x80]
+                    set [_2 v] to [0]
+                    set [_r v] to [0]
+                    set [s v] to (wst::list)
+                    set [kp v] to (wst_ptr)
+                    set [sp v] to (kp)
+                else
+                    OR [a0] (opc::custom)::custom
+                    if <(res) = (item ((pc) + (1)) of [ram v])> then
+                        think [0xa0]
+                        set [_2 v] to [1]
+                        set [_r v] to [0]
+                        set [s v] to (wst::list)
+                        set [kp v] to (wst_ptr)
+                        set [sp v] to (kp)
+                    else
+                        OR [c0] (opc::custom)::custom
+                        if <(res) = (item ((pc) + (1)) of [ram v])> then
+                            think [0xc0]
+                            set [_2 v] to [0]
+                            set [_r v] to [1]
+                            set [s v] to (rst::list)
+                            set [kp v] to (rst_ptr)
+                            set [sp v] to (kp)
+                        else
+                            OR [e0] (opc::custom)::custom
+                            if <(res) = (item ((pc) + (1)) of [ram v])> then
+                                think [0xe0]
+                                set [_2 v] to [1]
+                                set [_r v] to [1]
+                                set [s v] to (rst::list)
+                                set [kp v] to (rst_ptr)
+                                set [sp v] to (kp)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+define dec (n)
+hex (n::custom)::custom
+set [res v] to ((res) * (1))
+
+define hex (n)
+set [res v] to (join [0x] (n::custom))
